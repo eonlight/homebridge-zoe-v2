@@ -23,6 +23,13 @@ function APIWrapper(username, password, vin, log, storage) {
 
 APIWrapper.prototype.login = function () {
     return new Promise(async (resolve, reject) => {
+
+        // get tiemstamp now
+        now = new Date().toJSON().slice(0,13).replace(/-/g,'').replace(/T/g,'-');
+        if(this.lastJWTCall !== undefined && this.lastJWTCall != "" && this.lastJWTCall != now){
+            this.clear();
+        }
+
         try {
             if(this.gigyaCookieValue == "" || this.gigyaPersonID == "" || this.gigyaCookieValue === undefined || this.gigyaPersonID === undefined) {
                 this.log("1. Logging in");
@@ -127,6 +134,7 @@ APIWrapper.prototype.getBatteryStatus = function () {
   })
 }
 
+/*
 APIWrapper.prototype.startCharging = function (vin) {
   return new Promise(async (resolve, reject) => {
     try {
@@ -140,18 +148,19 @@ APIWrapper.prototype.startCharging = function (vin) {
   })
 }
 
+
 APIWrapper.prototype.stopCharging = function (vin) {
   return new Promise(async (resolve, reject) => {
     try {
-      let attr_data = '{"data":{"type":"ChargingStop","attributes":{"action":"stop"}}}';
-      let action = await this.setStatus('charging-stop', 1, attr_data.toString());
+      let attr_data = '{"data":{"type":"ChargingStart","attributes":{"action":"stop"}}}';
+      let action = await this.setStatus('charging-start', 1, attr_data.toString());
       this.log("Stop Charge Result: " + JSON.stringify(action));
       resolve(action);
     } catch (e) {
       reject(e);
     }
   })
-}
+}*/
 
 APIWrapper.prototype.getStatus = async function (endpoint, version=1) {
     // fetch data from kamereon (single vehicle)

@@ -10,29 +10,21 @@
                 "type": "string",
                 "required": true
             },
-            "phase": {
-                "title": "Phase",
-                "type": "number",
-                "required": true,
-                "default": 2,
-                "oneOf": [
-                    {"title": "1", "enum": [1]},
-                    {"title": "2", "enum": [2]}
-                ],
-                "description": "ZOE Model (Phase 1 or 2)"
+            "lowBattery": {
+                "title": "Low Battery %",
+                "type": "integer",
+                "required": false,
+                "default": 30,
+                "minimum": 5,
+                "maximum": 95,
+                "description": "Defines when homekit warns you of low battery"
             },
-            "battery": {
-                "title": "Battery Size",
-                "type": "number",
-                "required": true,
-                "default": 52,
-                "oneOf": [
-                    {"title": "21", "enum": [21]},
-                    {"title": "22", "enum": [22]},
-                    {"title": "41", "enum": [41]},
-                    {"title": "52", "enum": [52]}
-                ],
-                "description": "Battery Size in kWh"
+            "interval": {
+                "title": "Battery Check Interval",
+                "type": "integer",
+                "required": false,
+                "default": 1800,
+                "description": "Defines the interval to check for battery updates in seconds"
             },
             "vin": {
                 "title": "VIN",

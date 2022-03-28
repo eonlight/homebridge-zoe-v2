@@ -16,25 +16,27 @@ function RenaultZoe(log, config) {
     this.name = config.name;
 
     // car type details
-    this.phaseType = config.phase;
-    this.batteryType = config.battery;
+    //this.phaseType = config.phase;
+    //this.batteryType = config.battery;
+    this.lowBatteryLevel = config.lowBattery || 30;
+    this.updateInterval = config.interval || 1800; // in seconds
     this.vin = config.vin;
 
     // login details
     this.username = config.username;
     this.password = config.password;
 
-    //this.log("Accessory: " + JSON.stringify(this))
-
     // set storage settings
     this.cacheDirectory = HomebridgeAPI.user.persistPath();
     this.storage = require('node-persist');
     this.storage.initSync({dir:this.cacheDirectory, forgiveParseErrors: true});
 
+    this.batteryStatus = this.storage.getItemSync("batteryStatus");
 
     this.api = new APIWrapper(this.username, this.password, this.vin, log, this.storage);
     this.api.login().then(result => {
         this.log("Login result: " + result);
+        this.startInterval();
     }).catch(e => {
         this.log("Login error: " + e);
     });
@@ -56,12 +58,17 @@ function RenaultZoe(log, config) {
         .onGet(this.handleGetBatteryLevel.bind(this));
 
     // starts and stops battery charging
+    // stop charge doesn't work
+
+    /*
     this.charge = new Service.Switch(this.name + ' Charge');
     this.charge.getCharacteristic(Characteristic.On)
         .onGet(this.handleGetChargingState.bind(this))
         .onSet(this.handleChargeSet.bind(this));
+    */
 
-    // this._hvacService
+
+    // TODO: this.hvacService
 
     this.log("New Reanult Zoe accessory created.")
 }
@@ -70,29 +77,20 @@ RenaultZoe.prototype.getServices = function() {
     return [this.informationService, this.battery, this.charge];
 }
 
-RenaultZoe.prototype.handleChargeSet = function(value) {
-    this.log("Charge set: " + value);
-
-    if(value)
-        this.api.startCharging();
-    else
-        this.api.stopCharging();
+RenaultZoe.prototype.startInterval = function() {
+    this.log("Starting timeout");
+    this.interval = setInterval(() => {
+        this.log("Timeout called");
+        this.api.login().then(res => {
+            this.updateBattery();
+        }).catch(e => {
+            reject(e);
+        })
+    }, this.updateInterval * 1000);
 }
 
-RenaultZoe.prototype.handleGetChargingState = async function() {
-    this.log("Battery Charging State Handle Called");
-
-    let status = await this.api.getBatteryStatus('battery-status', 2)
-    return status.chargingStatus == 0 ? Characteristic.ChargingState.NOT_CHARGING : Characteristic.ChargingState.CHARGING;
-}
-
-RenaultZoe.prototype.handleGetBatteryLevel = async function() {
-    this.log("Battery Level Handle Called");
-    let status = await this.api.getBatteryStatus('battery-status', 2)
-    //this.log("Bat Level Status: " + JSON.stringify(status));
-    return status.batteryLevel;
-
-    /*{
+RenaultZoe.prototype.updateBattery = async function() {
+        /*{
         "id":"VF1AG000XXXXXXXXX",
         "timestamp":"2022-03-28T12:32:43Z",
         "batteryLevel":62,
@@ -105,10 +103,41 @@ RenaultZoe.prototype.handleGetBatteryLevel = async function() {
         "chargingRemainingTime":780,
         "chargingInstantaneousPower":19.6
     }*/
+    this.batteryStatus = await this.api.getBatteryStatus();
+    this.storage.setItemSync("batteryStatus", this.batteryStatus);
 }
 
-// TODO: not sure what this one does?
-RenaultZoe.prototype.handleLowBattery = function() {
-    this.log("Low Battery Handle Called");
-    return Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
+RenaultZoe.prototype.handleChargeSet = function(value) {
+    // clear state
+    this.batteryStatus = undefined;
+
+    if(value)
+        this.api.startCharging().then(status => {
+            this.updateBattery();
+        });
+    else
+        this.api.stopCharging().then(status => {
+            this.updateBattery();
+        });
+}
+
+RenaultZoe.prototype.handleGetChargingState = async function() {
+    if(this.batteryStatus === undefined || this.batteryStatus == "")
+        await this.updateBattery()
+
+    return this.batteryStatus.chargingStatus == 0 ? Characteristic.ChargingState.NOT_CHARGING : Characteristic.ChargingState.CHARGING;
+}
+
+RenaultZoe.prototype.handleGetBatteryLevel = async function() {
+    if(this.batteryStatus === undefined || this.batteryStatus == "")
+        await this.updateBattery()
+
+    return this.batteryStatus.batteryLevel;
+}
+
+RenaultZoe.prototype.handleLowBattery = async function() {
+    if(this.batteryStatus === undefined || this.batteryStatus == "")
+        await this.updateBattery()
+
+    return this.batteryStatus.batteryLevel < this.lowBatteryLevel ? Characteristic.StatusLowBattery.BATTERY_LEVEL_LOW : Characteristic.StatusLowBattery.BATTERY_LEVEL_NORMAL;
 }
