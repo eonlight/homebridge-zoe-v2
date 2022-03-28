@@ -1,0 +1,57 @@
+{
+    "pluginAlias": "RenaultZoe",
+    "pluginType": "accessory",
+    "singular": false,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "name": {
+                "title": "Name",
+                "type": "string",
+                "required": true
+            },
+            "phase": {
+                "title": "Phase",
+                "type": "number",
+                "required": true,
+                "default": 2,
+                "oneOf": [
+                    {"title": "1", "enum": [1]},
+                    {"title": "2", "enum": [2]}
+                ],
+                "description": "ZOE Model (Phase 1 or 2)"
+            },
+            "battery": {
+                "title": "Battery Size",
+                "type": "number",
+                "required": true,
+                "default": 52,
+                "oneOf": [
+                    {"title": "21", "enum": [21]},
+                    {"title": "22", "enum": [22]},
+                    {"title": "41", "enum": [41]},
+                    {"title": "52", "enum": [52]}
+                ],
+                "description": "Battery Size in kWh"
+            },
+            "vin": {
+                "title": "VIN",
+                "type": "string",
+                "required": true,
+                "description": "Renault Zoe VIN number"
+            },
+            "username": {
+                "title": "Username",
+                "type": "string",
+                "required": true,
+                "description": "My Renault Username"
+            },
+            "password": {
+                "title": "Password",
+                "type": "string",
+                "required": true,
+                "description": "My Renault Password"
+            }
+        }
+    }
+}
