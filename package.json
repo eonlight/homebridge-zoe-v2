@@ -1,9 +1,10 @@
 {
   "name": "homebridge-zoe-v2",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Renault ZOE Plugin V2 for homebridge",
   "license": "ISC",
   "keywords": [
+    "RenaultZoe",
     "Renault ZOE",
     "homebridge",
     "homebridge-plugin"
